@@ -1,0 +1,27 @@
+.listItem {
+  border: 1px solid black;
+  padding: 7px;
+  text-align: center;
+  border-radius: 5px;
+}
+
+.image {
+  margin-bottom: 0;
+}
+
+.name {
+  margin-top: 7px;
+  margin-bottom: 5px;
+}
+
+.isOnline {
+  font-size: 11px;
+}
+
+.online {
+  color: green;
+}
+
+.offline {
+  color: red;
+}
