@@ -1,0 +1,9 @@
+.list{
+    display: block;
+    list-style: none;
+  font-size: large;
+  font-weight: 500;
+  line-height: 1.5em;
+  padding-left: 10px;
+}
+
