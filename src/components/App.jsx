@@ -1,57 +1,68 @@
-import { useState, useEffect } from "react";
+import { Route, Routes } from "react-router-dom";
+import { useState, lazy, Suspense, useEffect } from "react";
+import Layout from "./Layout/Layout.jsx";
+import Loader from "../components/Loader/Loader.jsx";
+import RestrictedRoute from "./RestrictedRoute.jsx";
+import PrivateRoute from './PrivateRoute.jsx';
 
-import Description from "./description/Description";
-import Feedback from "./Feedback/Feedback";
-import Options from "./Options/Options";
-import Notification from "./Notification/Notification";
+const HomePage = lazy(() => import("../pages/HomePage/HomePage.jsx"));
+const NotFoundPage = lazy(() => import("../pages/NotFoundPage/NotFoundPage"));
+const ContactPage = lazy(() =>
+  import("../pages/ContactsPage/ContactsPage.jsx")
+);
+const RegisterPage = lazy(() => import("../pages/RegisterPage/RegisterPage"));
+const LoginPage = lazy(() => import("../pages/LoginPage/LoginPage"));
 
-const App = () => {
-  const startFeedback = { good: 0, neutral: 0, bad: 0 };
+import css from "./App.module.css";
+import { useDispatch, useSelector } from "react-redux";
+import { refreshUser } from "../redux/auth/operations.js";
+import { selectIsRefreshing } from "../redux/auth/selectors.js";
 
-  const [state, setState] = useState(() => {
-    const storageFeedback = window.localStorage.getItem("saveFeedback");
-    return storageFeedback !== null
-      ? JSON.parse(storageFeedback)
-      : startFeedback;
-  });
+export default function App() {
+  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const isRefreshing = useSelector(selectIsRefreshing);
 
-  const feedbackReset = () => {
-    setState(startFeedback);
-  };
   useEffect(() => {
-    window.localStorage.setItem("saveFeedback", JSON.stringify(state));
-  }, [state]);
+    dispatch(refreshUser());
+  }, [dispatch]);
 
-  let totalFeedback = 0;
-
-  const updateFeedback = (feedbackType) => {
-    setState({
-      ...state,
-      [feedbackType]: state[feedbackType] + 1,
-    });
-  };
-
-  for (let i of Object.values(state)) {
-    totalFeedback += i;
+  if (isRefreshing) {
+    return null;
   }
-  const positive = Math.round((state.good / totalFeedback) * 100);
 
   return (
-    <>
-      <Description />
-      <Options
-        updateFeedback={updateFeedback}
-        totalFeedback={totalFeedback}
-        feedbackReset={feedbackReset}
-      />
+    <Layout>
+      {loading && <Loader />}
+      <Suspense fallback={<Loader />}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route
+            path="/register"
+            element={
+              <RestrictedRoute component={<RegisterPage />} redirectTo="/" />
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <RestrictedRoute
+                component={<LoginPage />}
+                redirectTo="/contacts"
+              />
+            }
+          />
+          <Route
+            path="/contacts"
+            element={
+              <PrivateRoute component={<ContactPage />} redirectTo="/login" />
+            }
+          />
 
-      {totalFeedback > 0 ? (
-        <Feedback feedback={state} totalFeedback={totalFeedback} positive={positive} />
-      ) : (
-        <Notification />
-      )}
-    </>
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
+    </Layout>
   );
-};
 
 export default App;
